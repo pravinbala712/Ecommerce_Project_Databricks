@@ -1,0 +1,2 @@
+# Ignore unsupported asset types for Git folders
+*.geniespace.json

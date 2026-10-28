@@ -1,0 +1,296 @@
+{
+  "datasets": [
+    {
+      "name": "24716743",
+      "displayName": "fact_transactions_denorm",
+      "config": {
+        "version": "1.1",
+        "source": "ecommerce.gold.fact_transactions_denorm",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ]
+      }
+    },
+    {
+      "name": "9619ae52",
+      "displayName": "Monthly Ecommerce Sales Summary",
+      "queryLines": [
+        "SELECT\r\n",
+        "    DATE_TRUNC('MONTH', transaction_date) AS month,\r\n",
+        "    ROUND(SUM(net_amount), 2) AS net_amount\r\n",
+        "FROM ecommerce.gold.gld_fact_order_items\r\n",
+        "GROUP BY DATE_TRUNC('MONTH', transaction_date)\r\n",
+        "ORDER BY month;\r\n"
+      ]
+    },
+    {
+      "name": "acfdff9c",
+      "displayName": "Category Revenue Summary Analysis",
+      "queryLines": [
+        "SELECT\r\n",
+        "  category_name,\r\n",
+        "  ROUND(SUM(net_amount), 2) AS net_amount\r\n",
+        "FROM\r\n",
+        "  ecommerce.gold.fact_transactions_denorm\r\n",
+        "GROUP BY\r\n",
+        "  category_name\r\n",
+        "ORDER BY\r\n",
+        "  net_amount DESC;"
+      ]
+    },
+    {
+      "name": "474543f6",
+      "displayName": "Weekly Hourly Sales Summary Dataset",
+      "queryLines": [
+        "SELECT\r\n",
+        "  day_name,\r\n",
+        "  hour_of_day,\r\n",
+        "  ROUND(SUM(net_amount), 2) AS net_amount\r\n",
+        "FROM\r\n",
+        "  ecommerce.gold.fact_transactions_denorm\r\n",
+        "WHERE\r\n",
+        "  transaction_ts IS NOT NULL\r\n",
+        "GROUP BY\r\n",
+        "  day_name,\r\n",
+        "  hour_of_day\r\n",
+        "ORDER BY\r\n",
+        "  CASE day_name\r\n",
+        "    WHEN 'Sunday' THEN 1\r\n",
+        "    WHEN 'Monday' THEN 2\r\n",
+        "    WHEN 'Tuesday' THEN 3\r\n",
+        "    WHEN 'Wednesday' THEN 4\r\n",
+        "    WHEN 'Thursday' THEN 5\r\n",
+        "    WHEN 'Friday' THEN 6\r\n",
+        "    WHEN 'Saturday' THEN 7\r\n",
+        "  END,\r\n",
+        "  hour_of_day;"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "8af2d3b1",
+      "displayName": "Sales",
+      "layout": [
+        {
+          "widget": {
+            "name": "771986b0",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Sales Insights"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "61ffba40",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "9619ae52",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "sum(net_amount)",
+                      "expression": "SUM(`net_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(net_amount)",
+                  "displayName": "net_amount",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "d83b222d",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "acfdff9c",
+                  "fields": [
+                    {
+                      "name": "category_name",
+                      "expression": "`category_name`"
+                    },
+                    {
+                      "name": "sum(net_amount)",
+                      "expression": "SUM(`net_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "category_name",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(net_amount)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 1,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "4c9e4fe7",
+            "spec": {
+              "version": 3,
+              "widgetType": "heatmap",
+              "encodings": {},
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "a0942db7",
+      "displayName": "Global Filters",
+      "layout": [
+        {
+          "widget": {
+            "name": "3c3f4fb2",
+            "queries": [
+              {
+                "name": "dashboards/01f1cd1a9db819b9aa2a29a6bc43d1c1/datasets/01f1cd1b19c816339ac14992bd587641_category_name",
+                "query": {
+                  "datasetName": "24716743",
+                  "fields": [
+                    {
+                      "name": "category_name",
+                      "expression": "`category_name`"
+                    },
+                    {
+                      "name": "category_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "category_name",
+                    "queryName": "dashboards/01f1cd1a9db819b9aa2a29a6bc43d1c1/datasets/01f1cd1b19c816339ac14992bd587641_category_name"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
